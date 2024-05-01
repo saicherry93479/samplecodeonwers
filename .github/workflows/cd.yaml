@@ -74,7 +74,7 @@ jobs:
       - name: Replace placeholders in Deployment YAML
         run: |
           TAG=$(echo ${GITHUB_SHA} | head -c 7)
-          IMAGE_NAME="${{ secrets.REGISTRY_NAME }}/${{ env.BRANCH_NAME }}"
+          IMAGE_NAME="${{ secrets.REGISTRY_NAME }}/${{ env.REPO_NAME }}"
           sed -i "s|<IMAGE>|${IMAGE_NAME}:${TAG}|g; s|<NAME>|${{ env.BRANCH_NAME }}|g" $GITHUB_WORKSPACE/Kubernetes/Deployment.yml
 
       - name: Update service file
