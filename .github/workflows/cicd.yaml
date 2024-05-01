@@ -16,18 +16,34 @@ jobs:
     steps:
       - name: Check branch restrictions
         run: |
-          if [[ "${{ github.event.pull_request.base.ref }}" == "main" && "${{ github.event.pull_request.head.ref }}" == "development" ]] || 
-             [[ "${{ github.event.pull_request.base.ref }}" == "development" && "${{ github.event.pull_request.head.ref }}" == "staging" ]] || 
-             [[ "${{ github.event.pull_request.base.ref }}" == "staging" && "${{ github.event.pull_request.head.ref }}" == "main" ]] || 
-             [[ "${{ github.event.pull_request.base.ref }}" == "development" && "${{ github.event.pull_request.head.ref }}" == "main" ]]; then
-            echo "PR between restricted branches"
-            exit 1
+          base_branch="${{ github.event.pull_request.base.ref }}"
+          head_branch="${{ github.event.pull_request.head.ref }}"
+      
+          # Define allowed and restricted branch combinations
+          allowed_combinations=(
+            "development:staging"
+            "staging:main"
+            "development:development"
+          )
+      
+          restricted_combinations=(
+            "main:staging"
+            "main:development"
+            "staging:development"
+          )
+      
+          # Check if the branch combination is allowed or restricted
+          if [[ " ${allowed_combinations[*]} " != *" $base_branch:$head_branch "* ]]; then
+            if [[ " ${restricted_combinations[*]} " == *" $base_branch:$head_branch "* ]] || [[ "$base_branch" == "main" || "$base_branch" == "staging" ]]; then
+              echo "PR between restricted branches"
+              exit 1
+            fi
           fi
 
   ci:
     needs: check-pr-branches
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request_review.state == 'approved' }}
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request_review.state == 'approved' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
