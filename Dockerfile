@@ -1,5 +1,5 @@
 # Official Node.js runtime as the base image
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Set the working directory in the container
 WORKDIR /app
@@ -14,7 +14,7 @@ RUN npm i
 COPY . .
 
 # Expose the port that the development server will run on
-EXPOSE 5173
+EXPOSE 5000
 
 # Start the development server
 CMD ["npm", "start"]
