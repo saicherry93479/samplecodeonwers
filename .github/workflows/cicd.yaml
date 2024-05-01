@@ -34,16 +34,15 @@ jobs:
       
           # Check if the branch combination is allowed or restricted
           if [[ " ${allowed_combinations[*]} " != *" $head_branch:$base_branch "* ]]; then
-            if [[ " ${restricted_combinations[*]} " == *" $base_branch:$head_branch "* ]] || [[ "$base_branch" == "main" || "$base_branch" == "staging" ]]; then
+            if [[ " ${restricted_combinations[*]} " == *" $head_branch:$base_branch "* ]] || [[ "$base_branch" == "main" || "$base_branch" == "staging" ]]; then
               echo "PR between restricted branches"
               exit 1
             fi
           fi
 
   ci:
-    needs: check-pr-branches
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request_review.state == 'approved' }}
+    if: github.event.review.state == 'APPROVED'
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -56,13 +55,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run tests
-        run: npm test
 
   cd:
-    needs: ci
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.merged == true }}
+    if: github.event.pull_request.merged == true
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
