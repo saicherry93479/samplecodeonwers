@@ -23,7 +23,7 @@ spec:
       - name: <NAME>
         image: <IMAGE>
         ports:
-        - containerPort: 5173
+        - containerPort: 5000
         resources:
           requests:
             cpu: 100m
