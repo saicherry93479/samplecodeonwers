@@ -82,14 +82,14 @@ jobs:
         
       - name: Deploy to LEASE_APPLICATION namespace
         run: |
-          kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Deployment.yml -n LEASE_APPLICATION
+          kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Deployment.yml -n lease-application
           if [ "${{ steps.service-check.outputs.exists }}" == "false" ]; then
-            kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Service.yml -n LEASE_APPLICATION
+            kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Service.yml -n lease-application
           fi
 
       - name: Verify and clean up
         run: |
-          if ! kubectl rollout status deployment/${{ env.BRANCH_NAME }} -n LEASE_APPLICATION; then
+          if ! kubectl rollout status deployment/${{ env.BRANCH_NAME }} -n lease-application; then
             doctl registry repository delete ${{ secrets.REGISTRY_NAME }}/${{ env.BRANCH_NAME }}:${GITHUB_SHA:0:7} --force
             exit 1
           fi
