@@ -1,0 +1,100 @@
+name: Node.js CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - development
+      - staging
+jobs:
+  cd:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Set up environment variables
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          case "$BRANCH_NAME" in
+            development)
+              REPO_NAME="container_registry/LEASEAPP_DEVELOPMENT_REPO"
+              ;;
+            staging)
+              REPO_NAME="container_registry/LEASEAPP_STAGING_REPO"
+              ;;
+            main)
+              REPO_NAME="container_registry/LEASEAPP_PRODUCTION_REPO"
+              ;;
+            *)
+              echo "Unknown branch for deployment"
+              exit 1
+              ;;
+          esac
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
+
+      
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      
+      - name: Build container image
+        run: docker build -t ${{ secrets.REGISTRY_NAME }}/${{ env.REPO_NAME }}:$(echo $GITHUB_SHA | head -c7) .
+      
+      - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        run: doctl registry login --expiry-seconds 1200
+      
+      - name: Push image to DigitalOcean Container Registry
+        run: docker push ${{ secrets.REGISTRY_NAME }}/${{ env.REPO_NAME }}:$(echo $GITHUB_SHA | head -c7)
+      
+
+      
+      - name: Save DigitalOcean kubeconfig with short-lived credentials
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.CLUSTER_NAME }}
+      
+      - name: Ensure Kubernetes namespace
+        run: kubectl get namespace LEASE_APPLICATION || kubectl create namespace LEASE_APPLICATION
+      
+      - name: Check if Service Exists
+        id: service-check
+        run: |
+          if kubectl get svc <NAME>; then
+            echo "::set-output name=exists::true"
+          else
+            echo "::set-output name=exists::false"
+          fi
+          
+      - name: Replace placeholders in Deployment YAML
+        run: |
+          TAG=$(echo ${GITHUB_SHA} | head -c 7)
+          IMAGE_NAME="${{ secrets.REGISTRY_NAME }}/${{ env.BRANCH_NAME }}"
+          sed -i "s|<IMAGE>|${IMAGE_NAME}:${TAG}|g; s|<NAME>|${{ env.BRANCH_NAME }}|g" $GITHUB_WORKSPACE/Kubernetes/Deployment.yml
+
+      - name: Update service file
+        run: sed -i 's|<NAME>|${{ env.BRANCH_NAME }}|' $GITHUB_WORKSPACE/Kubernetes/Service.yml
+        
+      - name: Deploy to LEASE_APPLICATION namespace
+        run: |
+          kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Deployment.yml -n LEASE_APPLICATION
+          if [ "${{ steps.service-check.outputs.exists }}" == "false" ]; then
+            kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Service.yml -n LEASE_APPLICATION
+          fi
+
+      - name: Verify and clean up
+        run: |
+          if ! kubectl rollout status deployment/${{ env.BRANCH_NAME }} -n LEASE_APPLICATION; then
+            doctl registry repository delete ${{ secrets.REGISTRY_NAME }}/${{ env.BRANCH_NAME }}:${GITHUB_SHA:0:7} --force
+            exit 1
+          fi
+          PREVIOUS_IMAGE_TAG=$(doctl registry repository list-tags ${{ secrets.REGISTRY_NAME }}/${{ env.BRANCH_NAME }} --format Tag --no-header | grep -v ${GITHUB_SHA:0:7} | tail -n 1)
+          if [ -n "$PREVIOUS_IMAGE_TAG" ]; then
+            doctl registry repository delete ${{ secrets.REGISTRY_NAME }}/${{ env.BRANCH_NAME }}:$PREVIOUS_IMAGE_TAG --force
+          fi
