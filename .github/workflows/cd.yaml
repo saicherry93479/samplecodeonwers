@@ -87,13 +87,4 @@ jobs:
             kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Service.yml -n lease-application
           fi
 
-      - name: Verify and clean up
-        run: |
-          if ! kubectl rollout status deployment/${{ env.BRANCH_NAME }} -n lease-application; then
-            doctl registry repository delete ${{ secrets.REGISTRY_NAME }}/${{ env.BRANCH_NAME }}:${GITHUB_SHA:0:7} --force
-            exit 1
-          fi
-          PREVIOUS_IMAGE_TAG=$(doctl registry repository list-tags ${{ secrets.REGISTRY_NAME }}/${{ env.BRANCH_NAME }} --format Tag --no-header | grep -v ${GITHUB_SHA:0:7} | tail -n 1)
-          if [ -n "$PREVIOUS_IMAGE_TAG" ]; then
-            doctl registry repository delete ${{ secrets.REGISTRY_NAME }}/${{ env.BRANCH_NAME }}:$PREVIOUS_IMAGE_TAG --force
-          fi
+
