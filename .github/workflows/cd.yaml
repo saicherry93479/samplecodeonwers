@@ -23,13 +23,13 @@ jobs:
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
           case "$BRANCH_NAME" in
             development)
-              REPO_NAME="container_registry/leaseapp_development_repo"
+              REPO_NAME="leaseapp_development_repo"
               ;;
             staging)
-              REPO_NAME="container_registry/leaseapp_staging_repo"
+              REPO_NAME="leaseapp_staging_repo"
               ;;
             main)
-              REPO_NAME="container_registry/leaseapp_production_repo"
+              REPO_NAME="leaseapp_production_repo"
               ;;
             *)
               echo "Unknown branch for deployment"
@@ -62,14 +62,14 @@ jobs:
       - name: Ensure Kubernetes namespace
         run: kubectl get namespace lease-application || kubectl create namespace lease-application
       
-      - name: Check if Service Exists
-        id: service-check
-        run: |
-          if kubectl get svc ${{ env.BRANCH_NAME }}; then
-            echo "::set-output name=exists::true"
-          else
-            echo "::set-output name=exists::false"
-          fi
+      # - name: Check if Service Exists
+      #   id: service-check
+      #   run: |
+      #     if kubectl get svc ${{ env.BRANCH_NAME }}; then
+      #       echo "::set-output name=exists::true"
+      #     else
+      #       echo "::set-output name=exists::false"
+      #     fi
           
       - name: Replace placeholders in Deployment YAML
         run: |
@@ -83,8 +83,8 @@ jobs:
       - name: Deploy to LEASE_APPLICATION namespace
         run: |
           kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Deployment.yml -n lease-application
-          if [ "${{ steps.service-check.outputs.exists }}" == "false" ]; then
-            kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Service.yml -n lease-application
-          fi
+          # if [ "${{ steps.service-check.outputs.exists }}" == "false" ]; then
+          kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Service.yml -n lease-application
+          # fi
 
 
