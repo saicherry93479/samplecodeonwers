@@ -43,7 +43,7 @@ jobs:
   ci:
     needs: check-pr-branches
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request_review.state == 'approved' }}
+    if: github.event.review.state == 'APPROVED'
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -62,7 +62,7 @@ jobs:
   cd:
     needs: ci
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.merged == true }}
+    if: github.event.pull_request.merged == true
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
