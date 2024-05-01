@@ -60,7 +60,7 @@ jobs:
         run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.CLUSTER_NAME }}
       
       - name: Ensure Kubernetes namespace
-        run: kubectl get namespace LEASE-APPLICATION || kubectl create namespace LEASE-APPLICATION
+        run: kubectl get namespace lease-application || kubectl create namespace lease-application
       
       - name: Check if Service Exists
         id: service-check
