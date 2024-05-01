@@ -42,8 +42,9 @@ jobs:
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
           echo "CONTAINER_PORT=$CONTAINER_PORT" >> $GITHUB_ENV
+          
 
-      
+
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
