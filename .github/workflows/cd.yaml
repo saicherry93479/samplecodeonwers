@@ -23,13 +23,13 @@ jobs:
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
           case "$BRANCH_NAME" in
             development)
-              REPO_NAME="container_registry/leaseapp_development_repo"
+              REPO_NAME="leaseapp_development_repo"
               ;;
             staging)
-              REPO_NAME="container_registry/leaseapp_staging_repo"
+              REPO_NAME="leaseapp_staging_repo"
               ;;
             main)
-              REPO_NAME="container_registry/leaseapp_production_repo"
+              REPO_NAME="leaseapp_production_repo"
               ;;
             *)
               echo "Unknown branch for deployment"
