@@ -34,7 +34,7 @@ jobs:
       
           # Check if the branch combination is allowed or restricted
           if [[ " ${allowed_combinations[*]} " != *" $base_branch:$head_branch "* ]]; then
-            if [[ " ${restricted_combinations[*]} " == *" $base_branch:$head_branch "* ]] || [[ "$head_branch" == "main" || "$head_branch" == "staging" ]]; then
+            if [[ " ${restricted_combinations[*]} " == *" $base_branch:$head_branch "* ]] || [[ "$base_branch" == "main" || "$base_branch" == "staging" ]]; then
               echo "PR between restricted branches"
               exit 1
             fi
