@@ -18,12 +18,13 @@ spec:
     metadata:
       labels:
         app: <NAME>
+        common: commonservice
     spec:
       containers:
       - name: <NAME>
         image: <IMAGE>
         ports:
-        - containerPort: 5000
+        - containerPort: <CONTAINER_PORT>
         resources:
           requests:
             cpu: 100m
