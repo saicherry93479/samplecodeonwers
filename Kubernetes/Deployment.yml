@@ -23,6 +23,9 @@ spec:
       containers:
       - name: <NAME>
         image: <IMAGE>
+        env:
+        - name: CONTAINER_PORT
+          value: <CONTAINER_PORT>
         ports:
         - containerPort: <CONTAINER_PORT>
         resources:
