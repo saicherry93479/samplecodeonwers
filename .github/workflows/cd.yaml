@@ -64,8 +64,8 @@ jobs:
       - name: Save DigitalOcean kubeconfig with short-lived credentials
         run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.CLUSTER_NAME }}
       
-      - name: Ensure Kubernetes namespace
-        run: kubectl get namespace lease-application || kubectl create namespace lease-application
+      # - name: Ensure Kubernetes namespace
+      #   run: kubectl get namespace lease-application || kubectl create namespace lease-application
       
       # - name: Check if Service Exists
       #   id: service-check
@@ -83,13 +83,13 @@ jobs:
           sed -i "s|<IMAGE>|${IMAGE_NAME}:${TAG}|g; s|<CONTAINER_PORT>|${{ env.CONTAINER_PORT }}|g; s|<NAME>|${{ env.BRANCH_NAME }}|g" $GITHUB_WORKSPACE/Kubernetes/Deployment.yml
 
       - name: Update service file
-        run: sed -i 's|<NAME>|${{ env.BRANCH_NAME }}|' $GITHUB_WORKSPACE/Kubernetes/Service.yml
+        run: sed -i "s|<CONTAINER_PORT>|${{ env.CONTAINER_PORT }}|g; s|<NAME>|${{ env.BRANCH_NAME }}|g" $GITHUB_WORKSPACE/Kubernetes/Service.yml
         
       - name: Deploy to LEASE_APPLICATION namespace
         run: |
-          kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Deployment.yml -n lease-application
+          kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Deployment.yml 
           # if [ "${{ steps.service-check.outputs.exists }}" == "false" ]; then
-          kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Service.yml -n lease-application
+          kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Service.yml
           # fi
 
 
