@@ -4,8 +4,7 @@ metadata:
   name: <NAME>
 spec:
   selector:
-    app: myapp
-    environment: <NAME>
+    app: <NAME>
   ports:
     - protocol: TCP
       port: <CONTAINER_PORT>
