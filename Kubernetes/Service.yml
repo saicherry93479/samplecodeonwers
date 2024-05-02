@@ -3,11 +3,10 @@ kind: Service
 metadata:
   name: <NAME>
 spec:
-  type: LoadBalancer
-  ports:
-    - name: http
-      protocol: TCP
-      port: 5173
-      targetPort: 5173
   selector:
-    app: <NAME>
+    app: myapp
+    environment: <NAME>
+  ports:
+    - protocol: TCP
+      port: <CONTAINER_PORT>
+      targetPort: <CONTAINER_PORT>

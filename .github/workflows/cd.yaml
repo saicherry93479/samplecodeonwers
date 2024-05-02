@@ -23,13 +23,16 @@ jobs:
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
           case "$BRANCH_NAME" in
             development)
-              REPO_NAME="container_registry/leaseapp_development_repo"
+              REPO_NAME="leaseapp_development_repo"
+              CONTAINER_PORT="5000"
               ;;
             staging)
-              REPO_NAME="container_registry/leaseapp_staging_repo"
+              REPO_NAME="leaseapp_staging_repo"
+              CONTAINER_PORT="5001"
               ;;
             main)
-              REPO_NAME="container_registry/leaseapp_production_repo"
+              REPO_NAME="leaseapp_production_repo"
+              CONTAINER_PORT="5002"
               ;;
             *)
               echo "Unknown branch for deployment"
@@ -38,15 +41,17 @@ jobs:
           esac
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
+          echo "CONTAINER_PORT=$CONTAINER_PORT" >> $GITHUB_ENV
+          
 
-      
+
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
       
       - name: Build container image
-        run: docker build -t ${{ secrets.REGISTRY_NAME }}/${{ env.REPO_NAME }}:$(echo $GITHUB_SHA | head -c7) .
+        run: docker build --build-arg DEFAULT_PORT=$CONTAINER_PORT -t ${{ secrets.REGISTRY_NAME }}/${{ env.REPO_NAME }}:$(echo $GITHUB_SHA | head -c7) .
       
       - name: Log in to DigitalOcean Container Registry with short-lived credentials
         run: doctl registry login --expiry-seconds 1200
@@ -59,32 +64,32 @@ jobs:
       - name: Save DigitalOcean kubeconfig with short-lived credentials
         run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.CLUSTER_NAME }}
       
-      - name: Ensure Kubernetes namespace
-        run: kubectl get namespace lease-application || kubectl create namespace lease-application
+      # - name: Ensure Kubernetes namespace
+      #   run: kubectl get namespace lease-application || kubectl create namespace lease-application
       
-      - name: Check if Service Exists
-        id: service-check
-        run: |
-          if kubectl get svc ${{ env.BRANCH_NAME }}; then
-            echo "::set-output name=exists::true"
-          else
-            echo "::set-output name=exists::false"
-          fi
+      # - name: Check if Service Exists
+      #   id: service-check
+      #   run: |
+      #     if kubectl get svc ${{ env.BRANCH_NAME }}; then
+      #       echo "::set-output name=exists::true"
+      #     else
+      #       echo "::set-output name=exists::false"
+      #     fi
           
       - name: Replace placeholders in Deployment YAML
         run: |
           TAG=$(echo ${GITHUB_SHA} | head -c 7)
           IMAGE_NAME="${{ secrets.REGISTRY_NAME }}/${{ env.REPO_NAME }}"
-          sed -i "s|<IMAGE>|${IMAGE_NAME}:${TAG}|g; s|<NAME>|${{ env.BRANCH_NAME }}|g" $GITHUB_WORKSPACE/Kubernetes/Deployment.yml
+          sed -i "s|<IMAGE>|${IMAGE_NAME}:${TAG}|g; s|<CONTAINER_PORT>|${{ env.CONTAINER_PORT }}|g; s|<NAME>|${{ env.BRANCH_NAME }}|g" $GITHUB_WORKSPACE/Kubernetes/Deployment.yml
 
       - name: Update service file
-        run: sed -i 's|<NAME>|${{ env.BRANCH_NAME }}|' $GITHUB_WORKSPACE/Kubernetes/Service.yml
+        run: sed -i "s|<CONTAINER_PORT>|${{ env.CONTAINER_PORT }}|g; s|<NAME>|${{ env.BRANCH_NAME }}|g" $GITHUB_WORKSPACE/Kubernetes/Service.yml
         
       - name: Deploy to LEASE_APPLICATION namespace
         run: |
-          kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Deployment.yml -n lease-application
-          if [ "${{ steps.service-check.outputs.exists }}" == "false" ]; then
-            kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Service.yml -n lease-application
-          fi
+          kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Deployment.yml 
+          # if [ "${{ steps.service-check.outputs.exists }}" == "false" ]; then
+          kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Service.yml
+          # fi
 
 

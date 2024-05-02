@@ -1,23 +1,24 @@
-
-# Use the official Node.js 20 image
-# https://hub.docker.com/_/node
+# Official Node.js runtime as the base image
 FROM node:20-alpine
 
-# Create a directory to hold the application code inside the image.
-WORKDIR /usr/src/app
 
-# Copies package.json and package-lock.json to Docker environment
-COPY package*.json ./
+ARG DEFAULT_PORT=5000
+ENV PORT=$DEFAULT_PORT
 
-# Install dependencies
-RUN npm install
+# Set the working directory in the container
+WORKDIR /app
 
-# Bundle app source inside Docker image
+# Copy the package.json to the container
+COPY package.json .
+
+# Install the application dependencies
+RUN npm i
+
+# Copy the rest of the application files to the container
 COPY . .
 
-# Your app binds to port 5000 so you'll use the EXPOSE instruction to have it mapped by the docker daemon
-EXPOSE 5173
+# Expose the port that the development server will run on
+EXPOSE $PORT
 
-# Define the command to run your app using CMD which defines your runtime
-CMD [ "node", "app.js" ]
-
+# Start the development server
+CMD ["npm", "start"]
