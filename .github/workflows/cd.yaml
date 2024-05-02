@@ -87,9 +87,9 @@ jobs:
         
       - name: Deploy to LEASE_APPLICATION namespace
         run: |
-          kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Deployment.yml -n lease-application
+          kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Deployment.yml 
           # if [ "${{ steps.service-check.outputs.exists }}" == "false" ]; then
-          kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Service.yml -n lease-application
+          kubectl apply -f $GITHUB_WORKSPACE/Kubernetes/Service.yml
           # fi
 
 
