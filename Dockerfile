@@ -1,6 +1,10 @@
 # Official Node.js runtime as the base image
 FROM node:20-alpine
 
+
+ARG DEFAULT_PORT=5000
+ENV PORT=$DEFAULT_PORT
+
 # Set the working directory in the container
 WORKDIR /app
 
@@ -14,7 +18,7 @@ RUN npm i
 COPY . .
 
 # Expose the port that the development server will run on
-EXPOSE 5000
+EXPOSE $PORT
 
 # Start the development server
 CMD ["npm", "start"]
