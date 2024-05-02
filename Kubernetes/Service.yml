@@ -1,18 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: leas-service
+  name: <NAME>
 spec:
-  ports:
-  - name: first
-    port: 5000
-    targetPort: 5000
-  - name: second
-    port: 5001
-    targetPort: 5001
-  - name: third
-    port: 5002
-    targetPort: 5002
   selector:
-    common: commonservice
-  type: LoadBalancer
+    app: myapp
+    environment: <NAME>
+  ports:
+    - protocol: TCP
+      port: <CONTAINER_PORT>
+      targetPort: <CONTAINER_PORT>
